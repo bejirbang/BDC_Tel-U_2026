@@ -85,10 +85,10 @@ def build_transcripts(
                 "source_type": row.source_type,
                 "status": "",
                 "has_raw_transcript": str(raw_path.exists()),
-                "has_cleaned_transcript": str(clean_path.exists()),
+                "has_cleaned_transcript": "False",
                 "transcription_method": f"whisper:{model_name}",
                 "raw_transcript_path": str(raw_path.relative_to(root)),
-                "cleaned_transcript_path": str(clean_path.relative_to(root)),
+                "cleaned_transcript_path": "",
                 "notes": "",
             }
 
@@ -103,12 +103,12 @@ def build_transcripts(
                 records.append(record)
                 continue
 
-            if skip_existing and raw_path.exists() and clean_path.exists():
+            if skip_existing and raw_path.exists():
                 record.update(
                     {
                         "status": "skipped_existing",
                         "has_raw_transcript": "True",
-                        "has_cleaned_transcript": "True",
+                        "has_cleaned_transcript": "False",
                     }
                 )
                 records.append(record)
@@ -124,12 +124,11 @@ def build_transcripts(
                 _download_video(row, video_path, cookies_file)
                 transcript = transcribe_video(video_path, model_name=model_name, language=language)
                 raw_path.write_text(transcript + "\n", encoding="utf-8")
-                clean_path.write_text(clean_text(transcript).lower() + "\n", encoding="utf-8")
                 record.update(
                     {
                         "status": "transcribed",
                         "has_raw_transcript": "True",
-                        "has_cleaned_transcript": "True",
+                        "has_cleaned_transcript": "False",
                     }
                 )
             except (VideoUnavailableError, DriveFileUnavailableError) as exc:

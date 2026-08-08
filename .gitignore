@@ -86,13 +86,6 @@ venv.bak/
 *.swp
 *.swo
 
-data/1_raw/**/*.mp4
-data/1_raw/**/*.mkv
-data/1_raw/**/*.avi
-data/1_raw/**/*.mov
-data/1_raw/**/*.wav
-data/1_raw/**/*.mp3
-
 !data/1_raw/**/.gitkeep
 !data/2_processed/**/.gitkeep
 !analysis/**/.gitkeep
