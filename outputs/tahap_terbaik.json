@@ -1,0 +1,5 @@
+{
+  "tahap": "8. teks saja (TF-IDF+LogReg), bobot^1.0",
+  "macro_f1": 0.15464781872061756,
+  "accuracy": 0.3972602739726027
+}
