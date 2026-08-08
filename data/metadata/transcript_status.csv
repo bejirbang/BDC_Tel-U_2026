@@ -1,0 +1,4 @@
+dataset_id,video_id,emotion,url,source_type,status,has_raw_transcript,has_cleaned_transcript,transcription_method,raw_transcript_path,cleaned_transcript_path,notes
+1,SPR_001_IG,Surprise,https://www.instagram.com/reel/DNKcHgdA-d1/?igsh=MWFxdnhjbzh1YmdhYw%3D%3D,IG,transcribed,True,True,whisper:tiny,data\1_raw\transcripts\Surprise\SPR_001_IG_raw.txt,data\2_processed\transcripts\Surprise\SPR_001_IG_clean.txt,
+2,SPR_002_IG,Surprise,https://www.instagram.com/reel/DNHwrh2gnBm/?igsh=YTg3cGIycGtqbG51,IG,transcribed,True,True,whisper:tiny,data\1_raw\transcripts\Surprise\SPR_002_IG_raw.txt,data\2_processed\transcripts\Surprise\SPR_002_IG_clean.txt,
+3,SPR_003_IG,Surprise,https://www.instagram.com/reel/DM7QsjnRCoa/?igsh=NDQ1NW11a2ZiZW1y,IG,transcribed,True,True,whisper:tiny,data\1_raw\transcripts\Surprise\SPR_003_IG_raw.txt,data\2_processed\transcripts\Surprise\SPR_003_IG_clean.txt,
