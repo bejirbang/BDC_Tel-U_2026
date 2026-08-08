@@ -1,0 +1,18 @@
+# --- Wajib: menjalankan ulang model dari cache dan menghasilkan submission ---
+pandas==2.1.3
+numpy==1.26.4
+scikit-learn==1.6.1
+pyarrow==20.0.0
+lightgbm==4.6.0          # dipakai tangga ablation; model final tidak memakainya
+
+# --- Opsional: hanya untuk membangun ulang cache dari nol ---
+# Tidak diperlukan kalau menjalankan `run_all.py` dari cache yang disertakan.
+# yt-dlp==2026.7.4       # unduh Instagram
+# gdown==6.1.0           # unduh Google Drive
+# requests==2.32.3       # unduh CDN langsung
+# imageio-ffmpeg==0.6.0  # ffmpeg portabel (tanpa instalasi sistem)
+# faster-whisper==1.2.1  # transkripsi audio (butuh GPU untuk kecepatan wajar)
+
+# --- Opsional: visualisasi di notebook ---
+# matplotlib==3.8.2
+# seaborn==0.13.0

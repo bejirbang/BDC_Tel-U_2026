@@ -1,0 +1,11 @@
+model,konfigurasi,akurasi,macro_f1
+baseline tebak Surprise,-,41.2,0.058
+TF-IDF + LogReg,alpha=0.0,42.6,0.092
+TF-IDF + LogReg,alpha=0.5 (dipakai),42.0,0.099
+TF-IDF + LogReg,alpha=1.0,39.7,0.155
+IndoBERT beku + LogReg,alpha=0.0,36.0,0.147
+IndoBERT beku + LogReg,alpha=0.5,34.6,0.151
+IndoBERT beku + LogReg,alpha=1.0,29.4,0.144
+TF-IDF + IndoBERT digabung,alpha=0.5,36.6,0.149
+"ensemble 0,5/0,5",alpha=0.5,35.9,0.154
+IndoBERT fine-tuned,"alpha=0.5, 4 epoch",37.4,0.129

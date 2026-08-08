@@ -1,0 +1,30 @@
+# Cache hasil akuisisi - besar (belasan GB), jangan pernah masuk git.
+# Dikirim ke panitia terpisah (atau diganti fitur terekstrak, lihat RENCANA.md bagian 9).
+data/cache/video/
+data/cache/audio/
+data/cache/frames/
+data/cache/*.log
+data/cache/*.tmp
+
+# Metadata dan manifest ringan - ini JUSTRU harus di-commit.
+!data/cache/meta/
+!data/cache/manifest.csv
+!data/cache/transcript/
+!data/cache/probe_video.json
+
+# Artefak model dan fitur
+data/features/
+outputs/models/
+*.pkl
+*.joblib
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+cache_dir.txt
+
+# Berkas kerja Claude Code - jangan ikut ke repo
+.claude/
