@@ -22,19 +22,43 @@ from src.extraction.utils import (
 @lru_cache(maxsize=4)
 def _load_whisper_model(model_name: str):
     try:
+        import torch
         import whisper
     except ImportError as exc:
-        raise RuntimeError("openai-whisper is not installed. Run: pip install -r requirements.txt") from exc
+        raise RuntimeError(
+            "openai-whisper dan torch harus terinstall."
+        ) from exc
 
-    return whisper.load_model(model_name)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    print(f"Loading Whisper '{model_name}' on {device}...")
+
+    return whisper.load_model(model_name, device=device)
 
 
-def transcribe_video(video_path: Path, model_name: str = "small", language: str | None = "id") -> str:
+def transcribe_video(
+    video_path: Path,
+    model_name: str = "small",
+    language: str | None = "id",
+) -> str:
+    import torch
+
     model = _load_whisper_model(model_name)
-    kwargs = {"fp16": False}
+
+    use_gpu = torch.cuda.is_available()
+
+    kwargs = {
+        "fp16": use_gpu,
+    }
+
     if language:
         kwargs["language"] = language
-    result = model.transcribe(str(video_path), **kwargs)
+
+    result = model.transcribe(
+        str(video_path),
+        **kwargs,
+    )
+
     return clean_text(result.get("text", ""))
 
 
