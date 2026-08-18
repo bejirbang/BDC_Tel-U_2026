@@ -89,6 +89,123 @@ def hitung_leksikon(teks: str) -> dict[str, int]:
     return {k: sum(t.count(w) for w in kata) for k, kata in LEKSIKON.items()}
 
 
+# --------------------------------------------------------------------------
+# Fitur KONSEP - berbeda dari LEKSIKON di atas, dan jauh lebih berguna.
+#
+# LEKSIKON memetakan kata langsung ke EMOSI (`bangga` -> Proud) dan terbukti
+# gagal. KONSEP memetakan kata ke IDE (`ditinggal` -> kehilangan), lalu biar
+# classifier yang belajar ide mana menandakan emosi mana. Lapisan perantara itu
+# yang membuatnya bekerja: satu konsep bisa muncul lewat kata yang berbeda-beda
+# di topik yang berbeda-beda.
+#
+# Contoh pemicunya: video berlabel Sad tentang mobil yang ditinggal di Laos,
+# dengan tangki bahan bakar "gak kepake". Tidak ada satu pun kata emosi di sana,
+# tapi idenya jelas - kehilangan.
+#
+# CATATAN PENTING soal panjang daftar: versi dengan daftar kata JAUH LEBIH
+# PANJANG (hasil membaca puluhan transkrip) justru berskor LEBIH BURUK -
+# macro-F1 sama tapi akurasi turun 1 poin. Sebabnya kata umum seperti
+# `indonesia`, `yuk`, `cara`, `penting` muncul di semua kelas dan hanya
+# menambah derau. Presisi mengalahkan cakupan; jangan panjangkan daftar ini
+# tanpa mengukur ulang.
+# --------------------------------------------------------------------------
+
+KONSEP = {
+    "kon_kehilangan":  ["ditinggal", "kita tinggal", "hilang", "gak kepake", "sia-sia"],
+    "kon_kerusakan":   ["rusak", "pecah", "luka", "mati", "parah"],
+    "kon_kegagalan":   ["kalah", "gagal", "salah", "masalah"],
+    "kon_kabar_buruk": ["hati-hati", "bahaya", "risiko", "awas"],
+    "kon_kesedihan":   ["sedih", "duka", "prihatin"],
+    "kon_pencapaian":  ["pemenang", "menang", "juara", "prestasi", "meraih", "sukses", "emas"],
+    "kon_selamat":     ["selamat kepada", "bangga", "apresiasi"],
+    "kon_kepercayaan": ["resmi", "garansi", "kualitas", "aman"],
+    "kon_kegembiraan": ["seru", "happy", "senang", "keren", "mantap"],
+
+}
+
+# Sembilan konsep di atas yang dipakai MODEL FINAL. Yang di bawah dihitung dan
+# disimpan untuk analisis laporan, tapi TIDAK masuk model - lihat §23.
+KONSEP_FINAL = list(KONSEP)
+
+KONSEP_UJI = {
+    # --------------------------------------------------------------------
+    # Konsep gelombang kedua (§23), dirumuskan dari aturan pembeda manusia
+    # setelah menonton video-video yang paling sering tertukar. Sasarannya
+    # spesifik: segitiga Trust/Proud/Surprise yang memuat 83% data dan yang
+    # ANOTATORNYA SENDIRI tertukar di situ (§22).
+    #
+    # Aturannya:
+    #   Trust    = menonjolkan informasi/pengetahuan yang bisa dipercaya,
+    #              baik dengan menyampaikan fakta maupun menunjukkan caranya
+    #   Proud    = menggambarkan pencapaian atau spesifikasi
+    #   Surprise = produk baru yang lebih bagus dari yang lama; kemegahan
+    #
+    # Dipecah jadi sub-konsep, bukan tiga fitur gemuk, supaya kalau salah satu
+    # sisi ternyata derau ia bisa dibuang tanpa membuang sisi yang bekerja.
+    # Daftarnya sengaja pendek - lihat CATATAN PENTING di atas.
+    #
+    # HASIL: DITOLAK dari model final. Arah pembedanya benar untuk 4 dari 6
+    # (kon_mengajari terkuat: Trust 0,918 lawan Surprise 0,420), tapi pada CV
+    # akurasi kalah di 5 dari 5 seed (-1,1 poin) dan macro-F1 cuma +0,004.
+    # Sebabnya: 17 dari 20 katanya SUDAH ADA di kosakata TF-IDF (`tips` 52 dok,
+    # `fitur` 45, `harga` 149), jadi fitur ini cuma mengulang informasi yang
+    # sudah dipunyai - sebagai jumlah kasar yang malah membuang pembobotan
+    # per-kata. Bandingkan §17 yang berhasil karena menangkap FRASA langka
+    # ("kita tinggal", 1 video) yang mustahil dilihat TF-IDF unigram.
+    # --------------------------------------------------------------------
+
+    # Trust-a: mengajari / menunjukkan cara. Contoh: id 513 (tips servis tenis
+    # untuk pemula), id 487 (cara pakai dumbbell yang benar).
+    # `cara` sendirian TIDAK dipakai - §17 mencatatnya muncul di semua kelas.
+    "kon_mengajari": ["tips", "caranya", "cara pake", "cara buat", "tutorial",
+                      "pemula", "newbie", "beginner", "langkah"],
+
+    # Trust-b: menjelaskan sebab / mendiagnosis. Contoh: id 652 (kenapa ikan
+    # punya tonjolan), id 174 (data jarak tempuh yang sudah dicapai tim).
+    # `ternyata` sengaja TIDAK dipakai: muncul kuat juga di Proud (id 357).
+    "kon_menjelaskan": ["terlihat adanya", "penyebabnya", "sebenarnya",
+                        "untuk info", "faktanya", "artinya", "disebabkan"],
+
+    # Proud-a: pencapaian. Melengkapi `kon_pencapaian` dengan bentuk yang lebih
+    # spesifik dan tidak tumpang tindih dengannya.
+    "kon_prestasi": ["juara dunia", "rekor", "medali", "podium", "peringkat"],
+
+    # Proud-b: spesifikasi / varian tertinggi. Contoh: id 357 (174 cc, replica
+    # motor juara dunia), id 165 (varian paling tinggi, lebih canggih).
+    "kon_spesifikasi": ["varian", "spesifikasi", "fitur", "tipe tertinggi",
+                        "paling tinggi", "canggih"],
+
+    # Surprise-a: produk baru menggantikan yang lama.
+    "kon_produk_baru": ["terbaru", "meluncur", "diluncurkan", "rilis",
+                        "launching", "all new", "generasi baru", "model baru"],
+
+    # Surprise-b: kemegahan + pembukaan harga. §5A menemukan kata paling khas
+    # Surprise adalah `roda, bensin, mobilbaru, harga` - dua terakhir persis
+    # pola ini.
+    "kon_kemegahan": ["mewah", "megah", "gahar", "sultan", "termahal",
+                      "harganya", "miliar"],
+}
+
+
+# Dikompilasi sekali sebagai satu alternation per konsep.
+#
+# WAJIB regex, JANGAN menjumlahkan `str.count()` tiap kata secara terpisah:
+# kata yang bersarang akan terhitung dua kali. `"masalah"` akan dihitung
+# sebagai `salah` DAN `masalah`; `"pemenang"` sebagai `menang` DAN `pemenang`.
+# Bug ini sempat menggelembungkan kon_kegagalan dari 437 jadi 566 dan
+# menurunkan macro-F1 dari 0,135 ke 0,117. Regex alternation mencocokkan
+# tanpa tumpang tindih, jadi tiap kemunculan dihitung tepat sekali.
+_SEMUA_KONSEP = {**KONSEP, **KONSEP_UJI}
+_POLA_KONSEP = {
+    k: re.compile("|".join(re.escape(w) for w in kata), re.I)
+    for k, kata in _SEMUA_KONSEP.items()
+}
+
+
+def hitung_konsep(teks: str) -> dict[str, int]:
+    return {k: len(p.findall(teks or "")) for k, p in _POLA_KONSEP.items()}
+
+
 def bersihkan(t: str) -> str:
     """Normalisasi ringan. Sengaja TIDAK membuang emoji atau tanda baca dari
     `text_all` - keduanya sinyal emosi. Yang dibuang hanya URL dan spasi ganda."""

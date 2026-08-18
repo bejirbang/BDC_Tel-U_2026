@@ -13,6 +13,21 @@ lightgbm==4.6.0          # dipakai tangga ablation; model final tidak memakainya
 # imageio-ffmpeg==0.6.0  # ffmpeg portabel (tanpa instalasi sistem)
 # faster-whisper==1.2.1  # transkripsi audio (butuh GPU untuk kecepatan wajar)
 
+# --- Opsional: membangun ulang fitur visual CLIP (RENCANA.md §25) ---
+# Hasilnya (data/features/visual.parquet) ikut dikirim, jadi ini tidak
+# diperlukan untuk menjalankan run_all.py.
+#
+# PERINGATAN: `pip install opencv-python-headless` akan MENARIK NAIK numpy ke
+# 2.x dan memutus ABI pandas ("numpy.dtype size changed"), walaupun numpy sudah
+# dipin di atas. Pasang dengan constraint eksplisit:
+#     pip install opencv-python-headless "numpy<2"
+# opencv-python-headless==5.0.0
+# torch                  # sudah ada kalau menjalankan Whisper/IndoBERT
+# transformers>=4.40
+
 # --- Opsional: visualisasi di notebook ---
 # matplotlib==3.8.2
 # seaborn==0.13.0
+
+# Stemmer Bahasa Indonesia untuk model final (RENCANA.md §21)
+PySastrawi>=1.2.0

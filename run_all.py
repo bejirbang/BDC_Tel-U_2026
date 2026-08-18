@@ -31,6 +31,9 @@ TAHAP = [
     ("features_meta.py",  "fitur metadata (+ durasi & resolusi dari file video)"),
     ("features_text.py",  "fitur teks dari caption, hashtag, komentar"),
     ("features_audio.py", "fitur dari transkrip Whisper"),
+    # Melewati diri sendiri kalau emosi.parquet sudah ada, sehingga tahap ini
+    # tidak butuh internet saat cache-nya ikut dikirim.
+    ("features_emosi.py", "lapisan emosi: leksikon InSet + model emosi eksternal"),
     ("build_dataset.py",  "menggabungkan seluruh tabel fitur"),
     ("train.py",          "validasi silang + tabel ablation"),
     ("predict.py",        "melatih model final -> outputs/submission.csv"),

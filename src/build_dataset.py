@@ -15,7 +15,39 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import FEATURES_DIR, describe, save_features  # noqa: E402
 
 KUNCI = ["split", "id", "key", "emotion"]
-TEKS = ["text_caption", "text_all", "text_transcript", "text_combined"]
+TEKS = ["text_caption", "text_all", "text_transcript", "text_combined", "text_stem"]
+
+
+def stem_kolom(teks: pd.Series) -> pd.Series:
+    """Stem tiap dokumen dengan Sastrawi.
+
+    Cache dipasang per KATA, bukan per dokumen: 207 ribu token hanya berisi 41
+    ribu kata unik, jadi memoisasi memangkas waktu dari menitan jadi ~9 detik.
+
+    Kalau Sastrawi tidak terpasang, kolomnya diisi `text_combined` apa adanya
+    supaya pipeline tetap jalan - hanya kehilangan sumbangan macro-F1 dari §21.
+    """
+    try:
+        from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
+    except ImportError:
+        print("Sastrawi tidak terpasang - text_stem diisi teks asli "
+              "(pip install PySastrawi untuk mengaktifkan, lihat §21)")
+        return teks.fillna("")
+
+    stemmer = StemmerFactory().create_stemmer()
+    memo: dict[str, str] = {}
+
+    def satu(t: str) -> str:
+        keluar = []
+        for k in (t or "").lower().split():
+            if k not in memo:
+                memo[k] = stemmer.stem(k)
+            keluar.append(memo[k])
+        return " ".join(keluar)
+
+    hasil = teks.fillna("").map(satu)
+    print(f"stemming Sastrawi selesai ({len(memo)} kata unik di-cache)")
+    return hasil
 
 
 def build() -> pd.DataFrame:
@@ -47,6 +79,36 @@ def build() -> pd.DataFrame:
     df["text_combined"] = (
         df["text_all"].fillna("") + " " + df["text_transcript"].fillna("")
     ).str.strip()
+
+    # Fitur konsep dihitung DI SINI, bukan di features_text.py, karena harus
+    # membaca caption DAN transkrip sekaligus - dan `text_combined` baru ada
+    # setelah keduanya digabung.
+    from features_text import hitung_konsep
+    konsep = pd.DataFrame([hitung_konsep(t) for t in df["text_combined"]],
+                          index=df.index)
+    df = pd.concat([df, konsep], axis=1)
+    print(f"{konsep.shape[1]} fitur konsep ditambahkan "
+          f"(rata-rata {konsep.sum(axis=1).mean():.2f} kemunculan per baris)")
+
+    # Stemming Sastrawi (§21). Dipakai model final BERSAMA unigram-saja: pada
+    # unigram, stemming menyusutkan kosakata 17,4% dan menaikkan macro-F1 di 5
+    # dari 5 seed. Pada bigram efeknya hilang (kosakata cuma menyusut 1,6%),
+    # karena bigram jarang bertabrakan setelah di-stem.
+    df["text_stem"] = stem_kolom(df["text_combined"])
+
+    # Fitur emosi (§19) bersifat opsional dengan alasan yang sama seperti audio:
+    # membangunnya butuh dua model HuggingFace, jadi kalau `emosi.parquet` tidak
+    # ikut dikirim dan panitia offline, pipeline harus tetap jalan - hanya saja
+    # tanpa sumbangan macro-F1 dari lapisan emosi.
+    emosi_path = FEATURES_DIR / "emosi.parquet"
+    if emosi_path.exists():
+        emosi = pd.read_parquet(emosi_path)
+        df = df.merge(emosi.drop(columns=["key", "emotion"]), on=["split", "id"],
+                      how="left", validate="one_to_one")
+        n_emo = len([c for c in emosi.columns if c.startswith("emo_")])
+        print(f"emosi.parquet digabung ({n_emo} probabilitas emosi + leksikon InSet)")
+    else:
+        print("emosi.parquet belum ada - lewati (jalankan features_emosi.py)")
     return df
 
 
